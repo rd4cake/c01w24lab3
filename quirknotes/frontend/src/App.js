@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react"
+import React, { useState, useEffect } from "react"
 import './App.css';
 import Dialog from "./Dialog";
 import Note from "./Note";
@@ -13,21 +13,21 @@ function App() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogNote, setDialogNote] = useState(null)
 
-  
+
   // -- Database interaction functions --
   useEffect(() => {
     const getNotes = async () => {
       try {
         await fetch("http://localhost:4000/getAllNotes")
-        .then(async (response) => {
-          if (!response.ok) {
-            console.log("Served failed:", response.status)
-          } else {
+          .then(async (response) => {
+            if (!response.ok) {
+              console.log("Served failed:", response.status)
+            } else {
               await response.json().then((data) => {
-              getNoteState(data.response)
-          }) 
-          }
-        })
+                getNoteState(data.response)
+              })
+            }
+          })
       } catch (error) {
         console.log("Fetch function failed:", error)
       } finally {
@@ -38,15 +38,53 @@ function App() {
     getNotes()
   }, [])
 
-  const deleteNote = (entry) => {
-    // Code for DELETE here
+  const deleteNote = async (entry) => {
+    try {
+      await fetch(`http://localhost:4000/deleteNote/${entry._id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+        .then(async (response) => {
+          if (!response.ok) {
+            console.log("Served failed:", response.status)
+          } else {
+            await response.json().then((data) => {
+              deleteNoteState(entry._id)
+            })
+          }
+        })
+    } catch (error) {
+      console.log("Fetch function failed:", error)
+    }
   }
 
-  const deleteAllNotes = () => {
-    // Code for DELETE all notes here
+  const deleteAllNotes = async () => {
+    try {
+      await fetch(`http://localhost:4000/deleteAllNotes`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+        .then(async (response) => {
+          if (!response.ok) {
+            console.log("Served failed:", response.status)
+          } else {
+            await response.json().then((data) => {
+              deleteAllNotesState()
+            })
+          }
+        })
+    } catch (error) {
+      console.log("Fetch function failed:", error)
+    }
   }
 
-  
+
   // -- Dialog functions --
   const editNote = (entry) => {
     setDialogNote(entry)
@@ -69,19 +107,25 @@ function App() {
   }
 
   const postNoteState = (_id, title, content) => {
-    setNotes((prevNotes) => [...prevNotes, {_id, title, content}])
+    setNotes((prevNotes) => [...prevNotes, { _id, title, content }])
   }
 
-  const deleteNoteState = () => {
-    // Code for modifying state after DELETE here
+  const deleteNoteState = (_id) => {
+    setNotes(notes.filter(item => item._id != _id))
   }
 
   const deleteAllNotesState = () => {
-    // Code for modifying state after DELETE all here
+    setNotes([])
   }
 
   const patchNoteState = (_id, title, content) => {
-    // Code for modifying state after PATCH here
+    notes.forEach((value, index) => {
+      if (value._id == _id){
+        const x = JSON.parse(JSON.stringify(notes))
+        x[index] = {_id : _id, title : title, content : content}
+        setNotes(x)
+      }
+    });
   }
 
   return (
@@ -93,35 +137,35 @@ function App() {
 
           <div style={AppStyle.notesSection}>
             {loading ?
-            <>Loading...</>
-            : 
-            notes ?
-            notes.map((entry) => {
-              return (
-              <div key={entry._id}>
-                <Note
-                entry={entry} 
-                editNote={editNote} 
-                deleteNote={deleteNote}
-                />
-              </div>
-              )
-            })
-            :
-            <div style={AppStyle.notesError}>
-              Something has gone horribly wrong!
-              We can't get the notes!
-            </div>
+              <>Loading...</>
+              :
+              notes ?
+                notes.map((entry) => {
+                  return (
+                    <div key={entry._id}>
+                      <Note
+                        entry={entry}
+                        editNote={editNote}
+                        deleteNote={deleteNote}
+                      />
+                    </div>
+                  )
+                })
+                :
+                <div style={AppStyle.notesError}>
+                  Something has gone horribly wrong!
+                  We can't get the notes!
+                </div>
             }
           </div>
 
           <button onClick={postNote}>Post Note</button>
-          {notes && notes.length > 0 && 
-          <button
+          {notes && notes.length > 0 &&
+            <button
               onClick={deleteAllNotes}
-              >
+            >
               Delete All Notes
-          </button>}
+            </button>}
 
         </div>
 
@@ -130,8 +174,8 @@ function App() {
           initialNote={dialogNote}
           closeDialog={closeDialog}
           postNote={postNoteState}
-          // patchNote={patchNoteState}
-          />
+          patchNote={patchNoteState}
+        />
 
       </header>
     </div>
@@ -142,7 +186,7 @@ export default App;
 
 const AppStyle = {
   dimBackground: {
-    opacity: "20%", 
+    opacity: "20%",
     pointerEvents: "none"
   },
   notesSection: {
@@ -150,10 +194,10 @@ const AppStyle = {
     flexWrap: 'wrap',
     justifyContent: "center"
   },
-  notesError: {color: "red"},
+  notesError: { color: "red" },
   title: {
     margin: "0px"
-  }, 
+  },
   text: {
     margin: "0px"
   }

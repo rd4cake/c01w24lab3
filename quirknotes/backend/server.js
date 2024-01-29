@@ -104,6 +104,21 @@ app.delete("/deleteNote/:noteId", express.json(), async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 })
+
+// Delete all notes
+app.delete("/deleteAllNotes", express.json(), async (req, res) => {
+  try {
+    const collection = db.collection(COLLECTIONS.notes);
+    const data = await collection.deleteMany({
+    });
+
+    console.log(data)
+
+    res.json({ response: `All document deleted.` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+})
   
 // Patch a note
 app.patch("/patchNote/:noteId", express.json(), async (req, res) => {
@@ -116,6 +131,7 @@ app.patch("/patchNote/:noteId", express.json(), async (req, res) => {
 
     // Basic body request check
     const { title, content } = req.body;
+
     if (!title && !content) {
       return res
         .status(400)
@@ -126,12 +142,11 @@ app.patch("/patchNote/:noteId", express.json(), async (req, res) => {
     // Find note with given ID
     const collection = db.collection(COLLECTIONS.notes);
     const data = await collection.updateOne({
-      username: decoded.username,
       _id: new ObjectId(noteId),
     }, {
       $set: {
-        ...(title && {title}),
-        ...(content && {content})
+        title : title,
+        content : content
       }
     });
 
