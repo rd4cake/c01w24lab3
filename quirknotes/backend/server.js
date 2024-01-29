@@ -114,7 +114,7 @@ app.delete("/deleteAllNotes", express.json(), async (req, res) => {
 
     console.log(data)
 
-    res.json({ response: `All document deleted.` });
+    res.json({ response: `${data.deletedCount} nodes deleted` });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
